@@ -12,4 +12,4 @@ Built with **HTML, CSS, JavaScript** and uses **localStorage** for saving data.
 ## ▶️ How to run
 1. Clone the repository:
    ```bash
-   git clone https://github.com/St0yk0vV/expense-tracker.git
+    https://st0yk0vv.github.io/Daily-Expenses/
