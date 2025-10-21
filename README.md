@@ -1,4 +1,4 @@
-# 💰 Expense Tracker
+# 💰 Daily Expenses
 
 A simple web app to track daily expenses.  
 Built with **HTML, CSS, JavaScript** and uses **localStorage** for saving data.
