@@ -1,63 +1,141 @@
-const descInput = document.getElementById("desc");
+const dateInput   = document.getElementById("date");
+const descInput   = document.getElementById("desc");
 const amountInput = document.getElementById("amount");
-const addBtn = document.getElementById("addBtn");
+const addBtn      = document.getElementById("addBtn");
+const clearBtn    = document.getElementById("clearBtn");
+const exportCsvBtn  = document.getElementById("exportCsvBtn");
+const exportJsonBtn = document.getElementById("exportJsonBtn");
+const importJsonInput = document.getElementById("importJsonInput");
+
 const expenseList = document.getElementById("expenseList");
-const totalSpan = document.getElementById("total");
-const todaySpan = document.getElementById("today");
+const totalSpan   = document.getElementById("total");
+const todaySpan   = document.getElementById("today");
 
-const todayDate = new Date().toISOString().split('T')[0];
-todaySpan.textContent = todayDate;
+// --- Дата по подразбиране (днес)
+const todayISO = new Date().toISOString().split("T")[0];
+dateInput.value = todayISO;
+todaySpan.textContent = todayISO;
 
-// Зареждане от localStorage
+// --- Зареди цялата база (всички дни) от localStorage
 let expenses = JSON.parse(localStorage.getItem("expenses")) || {};
+if (!expenses[todayISO]) expenses[todayISO] = [];
 
-if (!expenses[todayDate]) {
-  expenses[todayDate] = [];
+// Унифицирано запазване
+function save() {
+  localStorage.setItem("expenses", JSON.stringify(expenses));
 }
 
-function renderExpenses() {
+// Рендер на избрания ден
+function render(day = dateInput.value) {
+  if (!expenses[day]) expenses[day] = [];
   expenseList.innerHTML = "";
   let total = 0;
 
-  expenses[todayDate].forEach((exp, index) => {
+  expenses[day].forEach((exp, index) => {
     const li = document.createElement("li");
     li.className = "expense-item";
-    li.textContent = `${exp.desc} - ${exp.amount} лв`;
+    li.textContent = `${exp.desc} - ${Number(exp.amount).toFixed(2)} лв`;
 
     const delBtn = document.createElement("button");
     delBtn.textContent = "❌";
     delBtn.onclick = () => {
-      expenses[todayDate].splice(index, 1);
-      localStorage.setItem("expenses", JSON.stringify(expenses));
-      renderExpenses();
+      expenses[day].splice(index, 1);
+      save();
+      render(day);
     };
 
     li.appendChild(delBtn);
     expenseList.appendChild(li);
-    total += parseFloat(exp.amount);
+    total += Number(exp.amount);
   });
 
   totalSpan.textContent = total.toFixed(2);
+  todaySpan.textContent = day;
 }
 
+// Добавяне
 addBtn.addEventListener("click", () => {
-  if (!descInput.value || !amountInput.value) {
-    alert("Please fill in all fields!");
+  const day = dateInput.value;
+  const desc = (descInput.value || "").trim();
+  const amount = Number(amountInput.value);
+
+  if (!desc || !amount || amount <= 0) {
+    alert("Please enter a valid description and a positive amount.");
     return;
   }
 
-  const newExp = {
-    desc: descInput.value.trim(),
-    amount: amountInput.value
-  };
-
-  expenses[todayDate].push(newExp);
-  localStorage.setItem("expenses", JSON.stringify(expenses));
+  if (!expenses[day]) expenses[day] = [];
+  expenses[day].push({ desc, amount });
+  save();
 
   descInput.value = "";
   amountInput.value = "";
-
-  renderExpenses();
+  render(day);
 });
 
-renderExpenses();
+// Смяна на деня от календара
+dateInput.addEventListener("change", () => render(dateInput.value));
+
+// Clear текущия ден
+clearBtn.addEventListener("click", () => {
+  const day = dateInput.value;
+  if (!expenses[day] || expenses[day].length === 0) return;
+  if (confirm(`Clear all expenses for ${day}?`)) {
+    expenses[day] = [];
+    save();
+    render(day);
+  }
+});
+
+// ----- Export CSV (всички дни)
+exportCsvBtn.addEventListener("click", () => {
+  const rows = [["date", "description", "amount"]];
+  Object.entries(expenses).forEach(([day, list]) => {
+    list.forEach(e => rows.push([day, e.desc, Number(e.amount).toFixed(2)]));
+  });
+
+  const csv = rows.map(r =>
+    r.map(x => `"${String(x).replace(/"/g,'""')}"`).join(",")
+  ).join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "expenses.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ----- Backup JSON
+exportJsonBtn.addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(expenses, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "expenses-backup.json";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ----- Restore JSON
+importJsonInput.addEventListener("change", async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (typeof data !== "object" || Array.isArray(data)) throw new Error("Bad format");
+    expenses = data;
+    save();
+    render(dateInput.value);
+    alert("Backup restored successfully.");
+  } catch (err) {
+    alert("Invalid JSON backup file.");
+  } finally {
+    importJsonInput.value = "";
+  }
+});
+
+// Първоначален рендер
+render(todayISO);
