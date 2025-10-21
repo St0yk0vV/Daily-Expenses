@@ -11,19 +11,34 @@
     <h1>💰 Expense Tracker</h1>
   </header>
 
-  <main>
-    <section class="form-section">
-      <input type="text" id="desc" placeholder="Expense description (e.g. Coffee)" required />
-      <input type="number" id="amount" placeholder="Amount (e.g. 3)" required />
-      <button id="addBtn">➕ Add Expense</button>
-    </section>
+ <main>
+  <!-- Форма за добавяне -->
+  <section class="form-section">
+    <input type="date" id="date" />
+    <input type="text" id="desc" placeholder="Expense description (e.g. Coffee)" required />
+    <input type="number" id="amount" placeholder="Amount (e.g. 3)" required />
+    <button id="addBtn">➕ Add Expense</button>
+    <button id="clearBtn" type="button">🧹 Clear day</button>
+  </section>
 
-    <section class="list-section">
-      <h2>Today's Expenses (<span id="today"></span>)</h2>
-      <ul id="expenseList"></ul>
-      <h3>Total: <span id="total">0</span> лв</h3>
-    </section>
-  </main>
+  <!-- Списък за разходите -->
+  <section class="list-section">
+    <h2>Expenses for <span id="today"></span></h2>
+    <ul id="expenseList"></ul>
+    <h3>Total: <span id="total">0</span> лв</h3>
+  </section>
+
+  <!-- Export/Import бутони -->
+  <section class="form-section">
+    <button id="exportCsvBtn" type="button">⬇️ Export CSV (all)</button>
+    <button id="exportJsonBtn" type="button">⬇️ Backup JSON</button>
+    <label class="import-label">
+      ⬆️ Restore JSON
+      <input id="importJsonInput" type="file" accept="application/json" hidden />
+    </label>
+  </section>
+</main>
+  
 
   <footer>
     <p>© 2025 Expense Tracker | Made by V. Stoykov</p>
